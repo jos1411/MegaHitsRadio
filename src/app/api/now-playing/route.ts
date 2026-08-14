@@ -67,6 +67,7 @@ export async function GET(request: Request): Promise<Response> {
             mapped.track.artist,
             mapped.isLive,
             mapped.liveDJName ?? "",
+            mapped.listeners,
           ].join("|");
 
           if (signature !== lastSignature) {

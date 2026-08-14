@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { LiveIndicator } from "@/features/player/LiveIndicator";
 import type { NowPlayingData } from "@/lib/types";
 
@@ -18,6 +20,23 @@ interface NowPlayingProps {
 }
 
 export function NowPlaying({ data, status }: NowPlayingProps) {
+  const [elapsed, setElapsed] = useState(0);
+
+  const trackKey = data ? `${data.track.title}\u0000${data.track.artist}` : null;
+
+  useEffect(() => {
+    if (!data) return;
+    setElapsed(data.elapsed);
+    const id = setInterval(() => {
+      setElapsed((prev) => {
+        const cap = data.duration > 0 ? data.duration : Number.POSITIVE_INFINITY;
+        return Math.min(prev + 1, cap);
+      });
+    }, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackKey]);
+
   if (!data) {
     return (
       <section className="rounded-xl bg-surface p-4">
@@ -54,7 +73,7 @@ export function NowPlaying({ data, status }: NowPlayingProps) {
         <p className="truncate text-lg font-semibold">{data.track.title}</p>
         <p className="truncate text-sm text-muted">{data.track.artist}</p>
         <p className="mt-1 text-xs tabular-nums text-muted">
-          {formatTime(data.elapsed)} / {formatTime(data.duration)}
+          {formatTime(elapsed)} / {formatTime(data.duration)}
         </p>
       </div>
 
