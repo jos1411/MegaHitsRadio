@@ -2,10 +2,16 @@
 
 import { useEffect, useRef } from "react";
 
+import type { NowPlayingData } from "@/lib/types";
+
 import { usePlayer } from "./PlayerContext";
 import { VolumeSlider } from "./VolumeSlider";
 
-export function AudioPlayer() {
+interface AudioPlayerProps {
+  nowPlaying?: NowPlayingData | null;
+}
+
+export function AudioPlayer({ nowPlaying = null }: AudioPlayerProps) {
   const { state, audioRef, playStream, dispatch } = usePlayer();
   const startedRef = useRef(false);
 
@@ -19,6 +25,52 @@ export function AudioPlayer() {
       playStream("/api/stream");
     }
   }, [playStream]);
+
+  // Media Session: OS-level metadata + play/pause controls.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
+      return;
+    }
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const mediaSession = navigator.mediaSession;
+
+    if (nowPlaying) {
+      mediaSession.metadata = new MediaMetadata({
+        title: nowPlaying.track.title,
+        artist: nowPlaying.track.artist,
+        artwork: nowPlaying.track.artwork
+          ? [
+              {
+                src: nowPlaying.track.artwork,
+                sizes: "512x512",
+                type: "image/jpeg",
+              },
+            ]
+          : [],
+      });
+    }
+
+    mediaSession.setActionHandler("play", () => {
+      audio
+        .play()
+        .then(() => dispatch({ type: "PLAY" }))
+        .catch(() => dispatch({ type: "SET_STATUS", status: "unavailable" }));
+    });
+    mediaSession.setActionHandler("pause", () => {
+      audio.pause();
+      dispatch({ type: "PAUSE" });
+    });
+    // Radio is live — seeking is not supported.
+    mediaSession.setActionHandler("seekbackward", null);
+    mediaSession.setActionHandler("seekforward", null);
+
+    return () => {
+      mediaSession.setActionHandler("play", null);
+      mediaSession.setActionHandler("pause", null);
+    };
+  }, [nowPlaying, audioRef, dispatch]);
 
   const toggle = () => {
     const audio = audioRef.current;
