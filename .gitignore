@@ -1,0 +1,33 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# env files
+.env
+.env.*
+!.env.example
+
+# testing
+/coverage
+/playwright-report/
+/test-results/
+
+# typescript
+*.tsbuildinfo
+
+# misc
+.DS_Store
+
+# dist
+/dist
+
+# serwist service worker (generated on build)
+/public/sw.js
+/public/sw.js.map
+/public/swe-worker-*.js
