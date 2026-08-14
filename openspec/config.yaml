@@ -1,0 +1,40 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Next.js 14+ (App Router), TailwindCSS, TypeScript
+  Architecture: PWA with BFF pattern (Next.js API routes as proxy)
+  Backend: AzuraCast (self-hosted radio automation)
+  Real-time: SSE via Centrifugo for now-playing updates
+  Audio: HTML5 <audio> element for Icecast/Shoutcast streams
+  Testing: TBD
+  Style: TBD
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Consider iOS background audio limitations
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Include PWA-specific requirements (installability, offline behavior)
+  design:
+    - Include sequence diagrams for real-time data flows
+    - Document audio streaming architecture decisions
+    - Address mobile-first responsive design
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - Phase 1 must deliver a working radio player MVP
+  apply:
+    guidelines:
+      - Follow Next.js App Router conventions
+      - Use Server Components where possible
+      - Client Components only for interactive/audio elements
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
