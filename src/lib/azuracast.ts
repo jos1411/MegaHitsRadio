@@ -48,6 +48,10 @@ function getConfig(): AzuraCastConfig {
   };
 }
 
+export function getStationId(): string {
+  return process.env.AZURACAST_STATION_ID ?? "1";
+}
+
 async function azuracastFetch<T>(
   path: string,
   timeoutMs = 10000,
