@@ -98,12 +98,27 @@ describe("src/lib/azuracast", () => {
     await expect(getNowPlaying(1)).rejects.toThrow(/AZURACAST_BASE_URL/);
   });
 
-  it("rejects getNowPlayingStatic when the API key is missing", async () => {
+  it("works without an API key (public read endpoints are unauthenticated)", async () => {
     process.env.AZURACAST_BASE_URL = "http://localhost:8080";
     delete process.env.AZURACAST_API_KEY;
 
-    const { getNowPlayingStatic } = await import("@/lib/azuracast");
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ station: { listen_url: "x" } }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
 
-    await expect(getNowPlayingStatic(1)).rejects.toThrow(/AZURACAST_API_KEY/);
+    const { getNowPlayingStatic } = await import("@/lib/azuracast");
+    const result = await getNowPlayingStatic(1);
+
+    expect(result.station.listen_url).toBe("x");
+
+    const init = fetchMock.mock.calls[0][1] as { headers: Record<string, string> };
+    expect(init.headers).not.toHaveProperty("X-API-Key");
+    expect(init.headers).not.toHaveProperty("Authorization");
+
+    vi.unstubAllGlobals();
   });
 });

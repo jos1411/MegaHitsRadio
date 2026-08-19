@@ -17,6 +17,7 @@ export type PlayerStatus =
   | "loading"
   | "playing"
   | "paused"
+  | "reconnecting"
   | "unavailable";
 
 export interface PlayerState {
@@ -36,6 +37,10 @@ export type PlayerAction =
   | { type: "SET_LIVE"; isLive: boolean };
 
 const VOLUME_KEY = "lment:volume";
+const STREAM_URL = "/api/stream";
+const MAX_RECONNECTS = 8;
+const INITIAL_RETRY_MS = 1000;
+const MAX_RETRY_MS = 30000;
 
 const initialState: PlayerState = {
   status: "idle",
@@ -70,7 +75,8 @@ function reducer(state: PlayerState, action: PlayerAction): PlayerState {
 export interface PlayerContextValue {
   state: PlayerState;
   audioRef: { current: HTMLAudioElement | null };
-  playStream: (url: string) => void;
+  playStream: () => void;
+  pauseStream: () => void;
   dispatch: Dispatch<PlayerAction>;
 }
 
@@ -81,29 +87,100 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const volumeRef = useRef(initialState.volume);
   const mutedRef = useRef(initialState.muted);
+  const userPausedRef = useRef(false);
+  const reconnectAttemptsRef = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    return () => {
-      audioRef.current?.pause();
-      audioRef.current = null;
-    };
+  const clearReconnect = useCallback(() => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
   }, []);
 
-  const playStream = useCallback((url: string) => {
+  // Lazily create the <audio> element and attach resilience listeners exactly once.
+  const ensureAudio = useCallback((): HTMLAudioElement => {
     let audio = audioRef.current;
-    if (!audio) {
-      audio = new Audio();
-      audio.preload = "none";
-      audio.volume = volumeRef.current;
-      audio.muted = mutedRef.current;
-      audioRef.current = audio;
-    }
-    audio.src = url;
+    if (audio) return audio;
+
+    audio = new Audio();
+    audio.preload = "none";
+    audio.volume = volumeRef.current;
+    audio.muted = mutedRef.current;
+
+    audio.addEventListener("playing", () => {
+      reconnectAttemptsRef.current = 0;
+      dispatch({ type: "PLAY" });
+    });
+
+    audio.addEventListener("waiting", () => {
+      if (!userPausedRef.current) {
+        dispatch({ type: "SET_STATUS", status: "loading" });
+      }
+    });
+
+    audio.addEventListener("stalled", () => {
+      if (!userPausedRef.current) {
+        dispatch({ type: "SET_STATUS", status: "reconnecting" });
+      }
+    });
+
+    audio.addEventListener("error", () => {
+      if (userPausedRef.current) return;
+
+      if (reconnectAttemptsRef.current >= MAX_RECONNECTS) {
+        dispatch({ type: "SET_STATUS", status: "unavailable" });
+        return;
+      }
+
+      reconnectAttemptsRef.current += 1;
+      const delay = Math.min(
+        INITIAL_RETRY_MS * 2 ** (reconnectAttemptsRef.current - 1),
+        MAX_RETRY_MS,
+      );
+
+      dispatch({ type: "SET_STATUS", status: "reconnecting" });
+      clearReconnect();
+      reconnectTimerRef.current = setTimeout(() => {
+        if (userPausedRef.current) return;
+        // Cache-buster forces a fresh upstream connection through /api/stream.
+        audio.src = `${STREAM_URL}?t=${Date.now()}`;
+        audio.play().catch(() => {
+          // Another "error" event will trigger the next retry.
+        });
+      }, delay);
+    });
+
+    audioRef.current = audio;
+    return audio;
+  }, [clearReconnect]);
+
+  const playStream = useCallback(() => {
+    userPausedRef.current = false;
+    const audio = ensureAudio();
+    dispatch({ type: "SET_STATUS", status: "loading" });
+    audio.src = `${STREAM_URL}?t=${Date.now()}`;
     audio
       .play()
       .then(() => dispatch({ type: "PLAY" }))
       .catch(() => dispatch({ type: "SET_STATUS", status: "unavailable" }));
-  }, []);
+  }, [ensureAudio]);
+
+  const pauseStream = useCallback(() => {
+    userPausedRef.current = true;
+    clearReconnect();
+    audioRef.current?.pause();
+    dispatch({ type: "PAUSE" });
+  }, [clearReconnect]);
+
+  useEffect(() => {
+    return () => {
+      clearReconnect();
+      userPausedRef.current = true;
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, [clearReconnect]);
 
   useEffect(() => {
     volumeRef.current = state.volume;
@@ -122,8 +199,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [state.volume]);
 
   const value = useMemo<PlayerContextValue>(
-    () => ({ state, audioRef, playStream, dispatch }),
-    [state, playStream],
+    () => ({ state, audioRef, playStream, pauseStream, dispatch }),
+    [state, playStream, pauseStream],
   );
 
   return (

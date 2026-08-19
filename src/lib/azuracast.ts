@@ -23,7 +23,7 @@ interface AzuraCastScheduleItem {
 
 interface AzuraCastConfig {
   baseUrl: string;
-  apiKey: string;
+  apiKey: string | undefined;
 }
 
 function getConfig(): AzuraCastConfig {
@@ -36,20 +36,20 @@ function getConfig(): AzuraCastConfig {
     );
   }
 
-  if (!apiKey) {
-    throw new Error(
-      "AZURACAST_API_KEY is not set. Add it to your environment variables.",
-    );
-  }
-
+  // The API key is optional: AzuraCast serves public read endpoints (now playing,
+  // schedule, mounts) without auth. It's only required for admin operations.
   return {
     baseUrl: baseUrl.replace(/\/+$/, ""),
-    apiKey,
+    apiKey: apiKey || undefined,
   };
 }
 
 export function getStationId(): string {
   return process.env.AZURACAST_STATION_ID ?? "1";
+}
+
+export function getBaseUrl(): string {
+  return getConfig().baseUrl;
 }
 
 async function azuracastFetch<T>(
@@ -62,11 +62,13 @@ async function azuracastFetch<T>(
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (apiKey) {
+      headers["X-API-Key"] = apiKey;
+    }
+
     const response = await fetch(`${baseUrl}${path}`, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
-      },
+      headers,
       signal: controller.signal,
       cache: "no-store",
     });

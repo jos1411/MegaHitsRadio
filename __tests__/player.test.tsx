@@ -26,12 +26,17 @@ afterEach(() => {
 });
 
 describe("AudioPlayer", () => {
-  it("starts playing on mount and toggles to paused", async () => {
+  it("starts idle (no autoplay), plays on click, and toggles to paused", async () => {
     render(
       <PlayerProvider>
         <AudioPlayer />
       </PlayerProvider>,
     );
+
+    // Autoplay is disabled: the player starts idle waiting for a user gesture.
+    expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
 
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument(),
@@ -42,7 +47,7 @@ describe("AudioPlayer", () => {
     expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
   });
 
-  it("shows 'Stream unavailable' when playback fails", async () => {
+  it("shows 'Stream unavailable' but stays retry-able when playback fails", async () => {
     Object.defineProperty(window.HTMLMediaElement.prototype, "play", {
       configurable: true,
       writable: true,
@@ -55,10 +60,13 @@ describe("AudioPlayer", () => {
       </PlayerProvider>,
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent("Stream unavailable"),
     );
-    expect(screen.getByRole("button", { name: "Play" })).toBeDisabled();
+    // The Play button stays enabled so the user can retry manually.
+    expect(screen.getByRole("button", { name: "Play" })).toBeEnabled();
   });
 });
 

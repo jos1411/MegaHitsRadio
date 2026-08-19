@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 import type { NowPlayingData } from "@/lib/types";
 
@@ -12,28 +12,20 @@ interface AudioPlayerProps {
 }
 
 export function AudioPlayer({ nowPlaying = null }: AudioPlayerProps) {
-  const { state, audioRef, playStream, dispatch } = usePlayer();
-  const startedRef = useRef(false);
+  const { state, playStream, pauseStream } = usePlayer();
 
   const { status } = state;
   const isPlaying = status === "playing";
+  const isLoading = status === "loading";
+  const isReconnecting = status === "reconnecting";
   const unavailable = status === "unavailable";
-
-  useEffect(() => {
-    if (!startedRef.current) {
-      startedRef.current = true;
-      playStream("/api/stream");
-    }
-  }, [playStream]);
+  const isActive = isPlaying || isLoading || isReconnecting;
 
   // Media Session: OS-level metadata + play/pause controls.
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
       return;
     }
-    const audio = audioRef.current;
-    if (!audio) return;
-
     const mediaSession = navigator.mediaSession;
 
     if (nowPlaying) {
@@ -52,16 +44,8 @@ export function AudioPlayer({ nowPlaying = null }: AudioPlayerProps) {
       });
     }
 
-    mediaSession.setActionHandler("play", () => {
-      audio
-        .play()
-        .then(() => dispatch({ type: "PLAY" }))
-        .catch(() => dispatch({ type: "SET_STATUS", status: "unavailable" }));
-    });
-    mediaSession.setActionHandler("pause", () => {
-      audio.pause();
-      dispatch({ type: "PAUSE" });
-    });
+    mediaSession.setActionHandler("play", () => playStream());
+    mediaSession.setActionHandler("pause", () => pauseStream());
     // Radio is live — seeking is not supported.
     mediaSession.setActionHandler("seekbackward", null);
     mediaSession.setActionHandler("seekforward", null);
@@ -70,33 +54,33 @@ export function AudioPlayer({ nowPlaying = null }: AudioPlayerProps) {
       mediaSession.setActionHandler("play", null);
       mediaSession.setActionHandler("pause", null);
     };
-  }, [nowPlaying, audioRef, dispatch]);
+  }, [nowPlaying, playStream, pauseStream]);
 
   const toggle = () => {
-    const audio = audioRef.current;
-    if (!audio || unavailable) return;
-
-    if (isPlaying) {
-      audio.pause();
-      dispatch({ type: "PAUSE" });
+    if (isActive) {
+      pauseStream();
     } else {
-      audio
-        .play()
-        .then(() => dispatch({ type: "PLAY" }))
-        .catch(() => dispatch({ type: "SET_STATUS", status: "unavailable" }));
+      playStream();
     }
   };
 
+  const statusLabel = isReconnecting
+    ? "Reconnecting"
+    : isLoading
+      ? "Connecting"
+      : unavailable
+        ? "Stream unavailable"
+        : null;
+
   return (
-    <div className="flex items-center gap-4 rounded-xl bg-surface p-3">
+    <div className="flex items-center gap-4">
       <button
         type="button"
         onClick={toggle}
-        disabled={unavailable}
-        aria-label={isPlaying ? "Pause" : "Play"}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-foreground transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label={isActive ? "Pause" : "Play"}
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-foreground transition-colors hover:bg-accent-hover"
       >
-        {isPlaying ? (
+        {isActive ? (
           <svg
             viewBox="0 0 24 24"
             fill="currentColor"
@@ -117,9 +101,12 @@ export function AudioPlayer({ nowPlaying = null }: AudioPlayerProps) {
         )}
       </button>
 
-      {unavailable && (
-        <p className="text-sm text-accent" role="alert">
-          Stream unavailable
+      {statusLabel && (
+        <p
+          className="text-sm text-muted"
+          role={unavailable ? "alert" : "status"}
+        >
+          {statusLabel}
         </p>
       )}
 
