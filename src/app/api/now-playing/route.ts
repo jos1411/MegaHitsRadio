@@ -11,12 +11,25 @@ export const dynamic = "force-dynamic";
 const POLL_MS = 5000;
 const HEARTBEAT_MS = 15000;
 
+function proxyArt(art: string): string {
+  if (!art) return "";
+  try {
+    const url = new URL(art);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return `/api/art?url=${encodeURIComponent(art)}`;
+    }
+  } catch {
+    // Keep the raw value if it's not an absolute URL.
+  }
+  return art;
+}
+
 function mapNowPlaying(np: AzuraCastNowPlaying): NowPlayingData {
   return {
     track: {
       title: np.now_playing.song.title,
       artist: np.now_playing.song.artist,
-      artwork: np.now_playing.song.art,
+      artwork: proxyArt(np.now_playing.song.art),
     },
     elapsed: np.now_playing.elapsed,
     duration: np.now_playing.duration,

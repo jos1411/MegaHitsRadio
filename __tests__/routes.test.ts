@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getNowPlayingStatic: vi.fn(),
   getSchedule: vi.fn(),
   getStationId: vi.fn(() => "1"),
+  getBaseUrl: vi.fn(() => "https://radio.example.com"),
 }));
 
 vi.mock("@/lib/azuracast", () => mocks);
@@ -13,6 +14,7 @@ vi.mock("@/lib/azuracast", () => mocks);
 import { GET as getNowPlayingRoute } from "@/app/api/now-playing/route";
 import { GET as getScheduleRoute } from "@/app/api/schedule/route";
 import { GET as getStreamRoute } from "@/app/api/stream/route";
+import { GET as getArtRoute } from "@/app/api/art/route";
 
 const sampleNP = {
   station: { listen_url: "https://radio.example.com/listen/station/mp3" },
@@ -68,6 +70,7 @@ describe("BFF routes: key secrecy and mapping", () => {
     expect(res.headers.get("content-type")).toContain("application/json");
     expect(body.track.title).toBe("Song");
     expect(body.track.artist).toBe("Artist");
+    expect(body.track.artwork).toContain("/api/art?url=");
     expect(body.listeners).toBe(5);
     expect(body.isLive).toBe(false);
     expect(JSON.stringify(body)).not.toContain("SECRET_KEY_123");
@@ -113,5 +116,36 @@ describe("BFF routes: key secrecy and mapping", () => {
 
     expect(res.status).toBe(502);
     expect(await res.text()).toBe("Stream unavailable");
+  });
+
+  it("art route proxies an AzuraCast-origin image", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("img", {
+          status: 200,
+          headers: { "content-type": "image/jpeg" },
+        }),
+      ),
+    );
+
+    const req = new Request(
+      "http://localhost/api/art?url=https%3A%2F%2Fradio.example.com%2Fart.jpg",
+    );
+    const res = await getArtRoute(req);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/jpeg");
+
+    vi.unstubAllGlobals();
+  });
+
+  it("art route rejects non-Azuracast origins", async () => {
+    const req = new Request(
+      "http://localhost/api/art?url=https%3A%2F%2Fevil.com%2Fx.jpg",
+    );
+    const res = await getArtRoute(req);
+
+    expect(res.status).toBe(403);
   });
 });
