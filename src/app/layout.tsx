@@ -3,20 +3,23 @@ import type { ReactNode } from "react";
 
 import "./globals.css";
 
+import { SiteShell } from "@/features/site/SiteShell";
+
 export const metadata: Metadata = {
-  title: "LMENT Radio",
-  description: "Radio online: listen live, see what's playing, and check the schedule.",
+  title: { default: "LMENT — Radio en vivo", template: "%s — LMENT" },
+  description:
+    "Productora y radio online. Eventos, sonido profesional y transmisión en vivo 24/7.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="es" className="dark">
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/icons/icon-192.png" />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
-        {children}
+        <SiteShell>{children}</SiteShell>
       </body>
     </html>
   );
