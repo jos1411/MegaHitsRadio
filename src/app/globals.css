@@ -2,15 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Design foundations (apple-design, scoped to LMENT).
+ * Color values mirror tailwind.config.ts — keep both in sync.
+ */
+
 :root {
   color-scheme: dark;
 }
 
-html,
-body {
-  height: 100%;
+@layer base {
+  html {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    font-optical-sizing: auto;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* Headings tighten optically; body copy stays near 0 (never one fixed value). */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+
+  /* Selection — brand-colored, a small craft detail. */
+  ::selection {
+    background-color: rgb(232 69 69 / 0.35);
+  }
+
+  /* Wayfinding: a visible keyboard focus ring; never a trapped user. */
+  :focus-visible {
+    outline: 2px solid #e84545;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Quiet chrome — subtle thin scrollbar. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(154 154 181 / 0.35) transparent;
+  }
 }
 
-body {
-  @apply bg-background text-foreground antialiased;
+@layer components {
+  /*
+   * Material translúcido (Apple materials). Backdrop-filter con saturate
+   * para vibrancia; el borde superior claro simula la luz pegando al material.
+   * Degrada a superficie sólida donde no hay backdrop-filter.
+   */
+  .glass {
+    background-color: rgb(26 26 46 / 0.72);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+}
+
+/* Materials degrade gracefully where backdrop-filter is unsupported. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background-color: #1a1a2e;
+  }
+}
+
+/*
+ * Reduced motion — gentler, non-vestibular equivalent: cross-fade, not
+ * slide/spring. Kill transforms, keep opacity/color changes that aid reading.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduced transparency — frostier/solid surfaces, no blur. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background-color: #1a1a2e;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Increased contrast — near-solid backgrounds with a defined edge. */
+@media (prefers-contrast: more) {
+  .glass {
+    background-color: #1a1a2e;
+  }
 }

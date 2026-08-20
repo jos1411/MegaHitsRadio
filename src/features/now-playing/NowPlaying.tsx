@@ -39,7 +39,7 @@ export function NowPlaying({ data, status }: NowPlayingProps) {
 
   if (!data) {
     return (
-      <section className="rounded-xl bg-surface p-4">
+      <section className="rounded-xl border border-white/5 bg-surface p-4 shadow-chip">
         <p className="text-sm text-muted">Cargando ahora sonando…</p>
       </section>
     );
@@ -48,7 +48,7 @@ export function NowPlaying({ data, status }: NowPlayingProps) {
   const offline = status === "offline" || status === "reconnecting";
 
   return (
-    <section className="flex items-center gap-4 rounded-xl bg-surface p-4">
+    <section className="flex items-center gap-4 rounded-xl border border-white/5 bg-surface p-4 shadow-chip">
       {data.track.artwork ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img

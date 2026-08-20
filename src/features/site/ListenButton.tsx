@@ -13,7 +13,7 @@ export function ListenButton() {
     <button
       type="button"
       onClick={() => (isActive ? pauseStream() : playStream())}
-      className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent-hover"
+      className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-foreground transition duration-150 hover:bg-accent-hover active:scale-[0.97]"
     >
       <svg
         viewBox="0 0 24 24"

@@ -17,7 +17,7 @@ export function DockedPlayer() {
       : "Conectando…";
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-surface bg-surface/95 backdrop-blur">
+    <div className="glass fixed inset-x-0 bottom-0 z-50 border-t border-white/10 shadow-material">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">

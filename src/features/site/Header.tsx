@@ -17,7 +17,7 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-surface bg-background/80 backdrop-blur">
+    <header className="glass sticky top-0 z-40 border-b border-white/10">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/" className="text-lg font-bold tracking-tight">
           {site.name}
@@ -36,7 +36,7 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? "page" : undefined}
-                className={`rounded-full px-3 py-1.5 transition-colors ${
+                className={`rounded-full px-3 py-1.5 transition duration-150 active:scale-[0.97] ${
                   active
                     ? "bg-accent/20 font-semibold text-foreground"
                     : "text-muted hover:text-foreground"

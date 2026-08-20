@@ -78,7 +78,7 @@ export function AudioPlayer({ nowPlaying = null }: AudioPlayerProps) {
         type="button"
         onClick={toggle}
         aria-label={isActive ? "Pause" : "Play"}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-foreground transition-colors hover:bg-accent-hover"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-foreground shadow-chip transition duration-150 hover:bg-accent-hover active:scale-95"
       >
         {isActive ? (
           <svg
