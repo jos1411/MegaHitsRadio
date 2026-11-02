@@ -6,11 +6,8 @@ import { usePathname } from "next/navigation";
 import { site } from "@/content/site";
 
 const NAV_LINKS = [
-  { href: "/", label: "Inicio" },
-  { href: "/servicios", label: "Servicios" },
+  { href: "/", label: "Escuchar" },
   { href: "/programacion", label: "Programación" },
-  { href: "/galeria", label: "Galería" },
-  { href: "/contacto", label: "Contacto" },
 ];
 
 export function Header() {

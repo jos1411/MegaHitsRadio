@@ -66,6 +66,73 @@
   }
 }
 
+.listener-art {
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 180px;
+  overflow: hidden;
+  margin-inline: auto;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 20% 20%, rgb(232 69 69 / 0.3), transparent 65%),
+    #1a1a2e;
+  box-shadow: 0 24px 48px -12px rgb(15 15 35 / 0.6);
+}
+
+.listener-art-fallback {
+  display: grid;
+  height: 100%;
+  place-content: center;
+  text-align: center;
+}
+
+.listener-compact-player {
+  grid-template-columns: 180px minmax(0, 1fr);
+  column-gap: 32px;
+  row-gap: 24px;
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.listener-compact-player .listener-art {
+  grid-column: 1;
+  grid-row: 1;
+  border-radius: 16px;
+}
+
+.listener-compact-player > .min-w-0 {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.listener-compact-sections {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.listener-compact-sections > * {
+  min-width: 0;
+}
+
+.listener-compact-sections section {
+  height: 100%;
+}
+
+.listener-art-fallback > span:first-child {
+  font-size: 4rem;
+  font-weight: 800;
+  letter-spacing: -0.08em;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e84545;
+}
+
 /* Materials degrade gracefully where backdrop-filter is unsupported. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass {
@@ -77,6 +144,28 @@
  * Reduced motion — gentler, non-vestibular equivalent: cross-fade, not
  * slide/spring. Kill transforms, keep opacity/color changes that aid reading.
  */
+@media (max-width: 700px) {
+  .listener-compact-player {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 24px;
+  }
+
+  .listener-compact-player .listener-art,
+  .listener-compact-player > .min-w-0,
+  .listener-compact-sections {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .listener-compact-player .listener-art {
+    width: min(100%, 180px);
+  }
+
+  .listener-compact-sections {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
