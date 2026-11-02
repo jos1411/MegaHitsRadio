@@ -17,6 +17,7 @@
 /coverage
 /playwright-report/
 /test-results/
+/browser-artifacts/
 
 # typescript
 *.tsbuildinfo

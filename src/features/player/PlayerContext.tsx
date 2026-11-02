@@ -42,6 +42,19 @@ const MAX_RECONNECTS = 8;
 const INITIAL_RETRY_MS = 1000;
 const MAX_RETRY_MS = 30000;
 
+function readSavedVolume(): number {
+  try {
+    const saved = window.localStorage.getItem(VOLUME_KEY);
+    if (saved === null || saved.trim() === "") return initialState.volume;
+    const volume = Number(saved);
+    return Number.isFinite(volume) && volume >= 0 && volume <= 1
+      ? volume
+      : initialState.volume;
+  } catch {
+    return initialState.volume;
+  }
+}
+
 const initialState: PlayerState = {
   status: "idle",
   volume: 0.8,
@@ -83,7 +96,10 @@ export interface PlayerContextValue {
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, initialState, (state) => ({
+    ...state,
+    volume: readSavedVolume(),
+  }));
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const volumeRef = useRef(initialState.volume);
   const mutedRef = useRef(initialState.muted);
@@ -108,47 +124,44 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     audio.volume = volumeRef.current;
     audio.muted = mutedRef.current;
 
-    audio.addEventListener("playing", () => {
-      reconnectAttemptsRef.current = 0;
-      dispatch({ type: "PLAY" });
-    });
-
-    audio.addEventListener("waiting", () => {
-      if (!userPausedRef.current) {
-        dispatch({ type: "SET_STATUS", status: "loading" });
-      }
-    });
-
-    audio.addEventListener("stalled", () => {
-      if (!userPausedRef.current) {
-        dispatch({ type: "SET_STATUS", status: "reconnecting" });
-      }
-    });
-
-    audio.addEventListener("error", () => {
-      if (userPausedRef.current) return;
-
+    const scheduleReconnect = () => {
+      if (userPausedRef.current || reconnectTimerRef.current) return;
       if (reconnectAttemptsRef.current >= MAX_RECONNECTS) {
         dispatch({ type: "SET_STATUS", status: "unavailable" });
         return;
       }
-
       reconnectAttemptsRef.current += 1;
       const delay = Math.min(
         INITIAL_RETRY_MS * 2 ** (reconnectAttemptsRef.current - 1),
         MAX_RETRY_MS,
       );
-
       dispatch({ type: "SET_STATUS", status: "reconnecting" });
-      clearReconnect();
       reconnectTimerRef.current = setTimeout(() => {
+        reconnectTimerRef.current = null;
         if (userPausedRef.current) return;
-        // Cache-buster forces a fresh upstream connection through /api/stream.
         audio.src = `${STREAM_URL}?t=${Date.now()}`;
         audio.play().catch(() => {
-          // Another "error" event will trigger the next retry.
+          // Another media error will schedule the next bounded retry.
         });
       }, delay);
+    };
+
+    audio.addEventListener("playing", () => {
+      clearReconnect();
+      reconnectAttemptsRef.current = 0;
+      dispatch({ type: "PLAY" });
+    });
+
+    audio.addEventListener("waiting", () => {
+      if (!userPausedRef.current) scheduleReconnect();
+    });
+
+    audio.addEventListener("stalled", () => {
+      if (!userPausedRef.current) scheduleReconnect();
+    });
+
+    audio.addEventListener("error", () => {
+      if (!userPausedRef.current) scheduleReconnect();
     });
 
     audioRef.current = audio;
@@ -193,8 +206,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [state.volume, state.muted]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    try {
       window.localStorage.setItem(VOLUME_KEY, String(state.volume));
+    } catch {
+      // Storage can be disabled or unavailable; playback remains usable.
     }
   }, [state.volume]);
 
