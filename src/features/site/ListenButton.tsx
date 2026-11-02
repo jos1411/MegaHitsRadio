@@ -13,6 +13,8 @@ export function ListenButton() {
     <button
       type="button"
       onClick={() => (isActive ? pauseStream() : playStream())}
+      aria-pressed={state.status === "playing"}
+      aria-busy={state.status === "loading" || state.status === "reconnecting"}
       className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-foreground transition duration-150 hover:bg-accent-hover active:scale-[0.97]"
     >
       <svg
@@ -27,7 +29,13 @@ export function ListenButton() {
           <path d="M8 5v14l11-7z" />
         )}
       </svg>
-      {isActive ? "Pausar" : "Escuchar en vivo"}
+      {state.status === "loading"
+        ? "Conectando…"
+        : state.status === "unavailable"
+          ? "Reintentar escucha"
+          : isActive
+            ? "Pausar"
+            : "Escuchar en vivo"}
     </button>
   );
 }
