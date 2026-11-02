@@ -6,9 +6,11 @@ import "./globals.css";
 import { SiteShell } from "@/features/site/SiteShell";
 
 export const metadata: Metadata = {
-  title: { default: "LMENT — Radio en vivo", template: "%s — LMENT" },
-  description:
-    "Productora y radio online. Eventos, sonido profesional y transmisión en vivo 24/7.",
+  title: {
+    default: "MegaHitsRadio — Radio en vivo",
+    template: "%s — MegaHitsRadio",
+  },
+  description: "Escuchá MegaHitsRadio en directo y conocé qué está sonando.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

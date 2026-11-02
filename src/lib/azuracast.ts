@@ -103,9 +103,7 @@ export async function getNowPlaying(
 export async function getNowPlayingStatic(
   stationId: string | number,
 ): Promise<AzuraCastNowPlaying> {
-  return azuracastFetch<AzuraCastNowPlaying>(
-    `/api/nowplaying_static/${stationId}.json`,
-  );
+  return azuracastFetch<AzuraCastNowPlaying>(`/api/nowplaying/${stationId}`);
 }
 
 export async function getMounts(

@@ -1,7 +1,7 @@
 {
-  "name": "LMENT Radio",
-  "short_name": "LMENT",
-  "description": "Radio online: listen live, see what's playing, and check the schedule.",
+  "name": "MegaHitsRadio",
+  "short_name": "MegaHitsRadio",
+  "description": "Escuchá MegaHitsRadio en directo y descubrí qué está sonando.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

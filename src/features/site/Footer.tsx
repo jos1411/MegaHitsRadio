@@ -1,7 +1,5 @@
 import { site } from "@/content/site";
 
-import { SocialLinks } from "./SocialLinks";
-
 export function Footer() {
   return (
     <footer className="border-t border-surface">
@@ -10,9 +8,8 @@ export function Footer() {
           <p className="font-semibold">{site.name}</p>
           <p className="text-sm text-muted">{site.tagline}</p>
         </div>
-        <SocialLinks />
         <p className="text-xs text-muted">
-          © {new Date().getFullYear()} {site.name}. {site.location}.
+          © {new Date().getFullYear()} {site.name}.
         </p>
       </div>
     </footer>

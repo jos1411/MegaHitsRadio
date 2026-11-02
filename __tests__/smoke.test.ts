@@ -114,6 +114,9 @@ describe("src/lib/azuracast", () => {
     const result = await getNowPlayingStatic(1);
 
     expect(result.station.listen_url).toBe("x");
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "http://localhost:8080/api/nowplaying/1",
+    );
 
     const init = fetchMock.mock.calls[0][1] as { headers: Record<string, string> };
     expect(init.headers).not.toHaveProperty("X-API-Key");

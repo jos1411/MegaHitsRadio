@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sin conexión — LMENT Radio",
+  title: "Sin conexión — MegaHitsRadio",
 };
 
 export default function OfflinePage() {

@@ -7,7 +7,6 @@ import { PlayerProvider } from "@/features/player/PlayerContext";
 import { DockedPlayer } from "./DockedPlayer";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
-import { WhatsAppButton } from "./WhatsAppButton";
 
 export function SiteShell({ children }: { children: ReactNode }) {
   return (
@@ -19,7 +18,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
         </main>
         <Footer />
         <DockedPlayer />
-        <WhatsAppButton />
       </div>
     </PlayerProvider>
   );

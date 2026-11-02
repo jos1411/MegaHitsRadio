@@ -32,10 +32,9 @@ export interface SiteContent {
 }
 
 export const site: SiteContent = {
-  name: "LMENT",
-  tagline: "Sonido, eventos y radio en vivo",
-  description:
-    "Productora y radio online. Cobertura de eventos, sonido profesional y transmisión en vivo 24/7.",
+  name: "MegaHitsRadio",
+  tagline: "Tu música. Tu momento.",
+  description: "Radio en directo para acompañarte donde estés.",
   // TODO: reemplazar por el número real de WhatsApp (sin el signo +).
   whatsappNumber: "50600000000",
   email: "contacto@lment.com",

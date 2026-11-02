@@ -39,8 +39,18 @@ export function NowPlaying({ data, status }: NowPlayingProps) {
 
   if (!data) {
     return (
-      <section className="rounded-xl border border-white/5 bg-surface p-4 shadow-chip">
-        <p className="text-sm text-muted">Cargando ahora sonando…</p>
+      <section
+        aria-label="Ahora en MegaHitsRadio"
+        aria-live="polite"
+        className="min-h-24 rounded-xl border border-white/5 bg-surface p-4 shadow-chip"
+      >
+        <p className="text-sm text-muted">
+          {status === "offline"
+            ? "La señal no está disponible. Volveremos a intentarlo."
+            : status === "reconnecting"
+              ? "Se perdió la conexión. Reconectando…"
+              : "Buscando lo que suena…"}
+        </p>
       </section>
     );
   }
@@ -48,7 +58,10 @@ export function NowPlaying({ data, status }: NowPlayingProps) {
   const offline = status === "offline" || status === "reconnecting";
 
   return (
-    <section className="flex items-center gap-4 rounded-xl border border-white/5 bg-surface p-4 shadow-chip">
+    <section
+      aria-label="Ahora en MegaHitsRadio"
+      className="flex min-h-24 items-center gap-4 rounded-xl border border-white/5 bg-surface p-4 shadow-chip"
+    >
       {data.track.artwork ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
