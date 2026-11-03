@@ -74,6 +74,22 @@ describe("public proxy security", () => {
     expect(canceled).toBe(true);
   });
 
+  it("accepts the station artwork route returned by AzuraCast", async () => {
+    const url = "https://radio.example.com/api/station/lment_radio/art/ea079c61ade598334aa3d8b4";
+    const fetcher = vi.fn().mockResolvedValue(new Response("cover", { headers: { "content-type": "image/jpeg" } }));
+    vi.stubGlobal("fetch", fetcher);
+    const response = await art(artRequest(url));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(await response.text()).toBe("cover");
+    expect(fetcher).toHaveBeenCalledWith(url, expect.objectContaining({ redirect: "manual" }));
+    fetcher.mockClear();
+    const rejected = await art(artRequest(url.replace("radio.example.com", "evil.example")));
+    expect(rejected.status).toBe(403);
+    expect(await rejected.text()).toBe("Forbidden");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("preserves successful public audio and safe image responses", async () => {
     mocks.getNowPlayingStatic.mockResolvedValue(data("https://radio.example.com/listen/station/mp3"));
     const audio = vi.fn().mockResolvedValue(new Response("audio", { headers: { "content-type": "audio/mpeg" } })); vi.stubGlobal("fetch", audio);

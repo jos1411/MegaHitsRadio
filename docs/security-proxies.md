@@ -2,7 +2,7 @@
 
 The stream and artwork routes are public read-only proxies. They use the configured `AZURACAST_BASE_URL` origin only, reject URL credentials/fragments and unsupported paths, and disable redirects so a trusted origin cannot redirect the server to an arbitrary destination. These routes never attach `AZURACAST_API_KEY`; the key is used only by AzuraCast API reads.
 
-Artwork is limited to JPEG, PNG, WebP, and GIF under AzuraCast media/upload/art paths, with a 1 MiB response limit and a five-second body-read timeout. The stream has a bounded setup timeout and remains open for healthy live audio; downstream cancellation cancels its upstream reader. Stream URLs must match `/listen/{station}/{mount}`, `/radio/{mount}`, or `/stream/{mount}`.
+Artwork is limited to JPEG, PNG, WebP, and GIF under AzuraCast media/upload/art paths, including the canonical `/api/station/{station}/art/{hash}` route (station IDs use letters/digits/underscore/hyphen and hashes use 24–64 hexadecimal characters), with a 1 MiB response limit and a five-second body-read timeout. The stream has a bounded setup timeout and remains open for healthy live audio; downstream cancellation cancels its upstream reader. Stream URLs must match `/listen/{station}/{mount}`, `/radio/{mount}`, or `/stream/{mount}`.
 
 HTTP remains permitted only when the configured origin itself is HTTP, to support existing public radio installations. That transport is plaintext and provides no confidentiality or origin authentication; prefer an HTTPS AzuraCast origin. No TLS proof or working HTTPS endpoint is implied by this code.
 
