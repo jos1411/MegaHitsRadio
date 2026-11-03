@@ -1,4 +1,5 @@
-import { getBaseUrl } from "@/lib/azuracast";
+import { trustedTarget, UPSTREAM_SETUP_TIMEOUT_MS } from "@/lib/upstream-policy";
+import { readSafeArtwork } from "@/lib/proxy-response";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,40 +15,37 @@ export async function GET(request: Request): Promise<Response> {
     return new Response("Missing url parameter", { status: 400 });
   }
 
-  let baseOrigin: string;
-  let target: URL;
-  try {
-    baseOrigin = new URL(getBaseUrl()).origin;
-    target = new URL(raw);
-  } catch {
-    return new Response("Invalid url", { status: 400 });
-  }
-
-  if (target.origin !== baseOrigin) {
+  const target = trustedTarget(raw, "art");
+  if (!target) {
     return new Response("Forbidden", { status: 403 });
   }
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), UPSTREAM_SETUP_TIMEOUT_MS);
     const upstream = await fetch(target.toString(), {
-      headers: { Accept: "image/*" },
-      cache: "no-store",
+      headers: { Accept: "image/jpeg,image/png,image/webp,image/gif" },
+      cache: "no-store", redirect: "manual", signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!upstream.ok || !upstream.body) {
       return new Response("Artwork unavailable", { status: 502 });
     }
 
+    const safe = await readSafeArtwork(upstream);
+    if (!safe) return new Response("Artwork unavailable", { status: 502 });
+
     const headers = new Headers();
-    headers.set(
-      "Content-Type",
-      upstream.headers.get("content-type") ?? "image/jpeg",
-    );
+    headers.set("Content-Type", safe.type);
     headers.set(
       "Cache-Control",
       "public, max-age=3600, stale-while-revalidate=86400",
     );
 
-    return new Response(upstream.body, { status: 200, headers });
+    const body = new Uint8Array(safe.body.byteLength);
+    body.set(safe.body);
+    return new Response(body, { status: 200, headers });
   } catch {
     return new Response("Artwork unavailable", { status: 502 });
   }

@@ -102,7 +102,7 @@ describe("BFF routes: key secrecy and mapping", () => {
       ),
     );
 
-    const res = await getStreamRoute();
+    const res = await getStreamRoute(new Request("http://localhost/api/stream"));
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("audio/mpeg");
@@ -112,7 +112,7 @@ describe("BFF routes: key secrecy and mapping", () => {
   it("stream route returns 502 when the upstream is unavailable", async () => {
     mocks.getNowPlayingStatic.mockRejectedValue(new Error("down"));
 
-    const res = await getStreamRoute();
+    const res = await getStreamRoute(new Request("http://localhost/api/stream"));
 
     expect(res.status).toBe(502);
     expect(await res.text()).toBe("Stream unavailable");
