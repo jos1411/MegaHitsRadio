@@ -1,16 +1,16 @@
 # LMENT — Radio Online
 
-A PWA radio player: listen live, see what's playing, and check the schedule.
-Built with Next.js 14 (App Router) as a BFF proxy in front of a self-hosted
+A compact radio player: listen live, see what's playing, and check the schedule.
+Built with maintained Next.js (App Router) as a BFF proxy in front of a self-hosted
 [AzuraCast](https://www.azuracast.com) backend.
 
 ## Stack
 
-- **Frontend**: Next.js 14 App Router + TypeScript (strict) + TailwindCSS
+- **Frontend**: Next.js 16 App Router + React 19 + TypeScript (strict) + TailwindCSS
 - **Backend**: AzuraCast (self-hosted radio automation)
 - **Real-time**: Server-Sent Events (SSE) proxied through the BFF
 - **Audio**: HTML5 `<audio>` streaming the Icecast MP3 mount
-- **PWA**: `@serwist/next` (installable, offline shell, Media Session)
+- **Service worker**: Serwist integration retained; installability/offline support is not claimed
 - **Testing**: Vitest + Testing Library (unit), Playwright (e2e)
 
 ## Architecture
@@ -33,24 +33,27 @@ Browser ──► Next.js (BFF) ──► AzuraCast API
 
 ## Requirements
 
-- Node.js 20+ (tested on v24)
+- Node.js 22.12+ for the current Wrangler/Vite tooling
 - npm
-- An AzuraCast install with a station, a MP3 mount, and an API key
+- An AzuraCast install with a station and an MP3 mount; public reading/listening does not require an API key
 
 ## Local development
 
 ```bash
-npm install
-cp .env.example .env.local   # fill in AZURACAST_* values
-npm run dev                  # http://localhost:3000
+npm ci
+AZURACAST_BASE_URL=https://your-verified-origin.example npm run dev
 ```
+
+Set `AZURACAST_STATION_ID` if the station is not `1`. Public reading and
+listening do not require an API key. Any future private API key belongs only in
+server-side runtime secrets, never in a browser bundle or checked-in file.
 
 ## Environment variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `AZURACAST_BASE_URL` | yes | Base URL of your AzuraCast install (no trailing slash). |
-| `AZURACAST_API_KEY` | yes | API key from AzuraCast (Settings → My API Keys). |
+| `AZURACAST_API_KEY` | no | Optional server-only credential if a future private API operation needs it. |
 | `AZURACAST_STATION_ID` | no | Station ID. Defaults to `1`. |
 
 These are read **server-side only** (`src/lib/azuracast.ts` uses
@@ -65,6 +68,8 @@ These are read **server-side only** (`src/lib/azuracast.ts` uses
 | `npm start` | Serve the production build. |
 | `npm test` | Run unit tests (Vitest). |
 | `npm run test:e2e` | Run Playwright e2e (requires `npx playwright install`). |
+| `npm run cf:build` | Build the Cloudflare Worker bundle with OpenNext. |
+| `npm run cf:preview` | Preview the built Worker locally with Wrangler. |
 
 ## PWA icons
 
@@ -76,24 +81,26 @@ node scripts/generate-icons.mjs
 
 ## Deployment
 
-The app runs as a standard Node service. Recommended: co-locate on the VPS
-with AzuraCast via Docker Compose.
-
-1. Build the image / checkout the repo on the VPS.
-2. Set `AZURACAST_BASE_URL`, `AZURACAST_API_KEY`, `AZURACAST_STATION_ID`.
-3. `npm install && npm run build && npm start` (or run behind a reverse proxy
-   with TLS — the PWA requires HTTPS for installability).
+The supported hosting target is Cloudflare Workers via OpenNext. See
+[`docs/cloudflare-deployment.md`](docs/cloudflare-deployment.md) for the
+owner-managed configuration, local Worker preview, dependency-advisory
+exposure classification, and deployment checklist. The retained dependency
+audit still has transitive findings; do not treat this tree as audit-clean.
+A Worker asset URL served over HTTPS does not prove TLS from the Worker to the
+AzuraCast origin. Origin TLS must be independently verified. Deployment,
+account changes, and VPS changes are not performed here.
 
 ## AzuraCast setup checklist
 
 1. Create a station and enable a **MP3** mount (iOS Safari needs MP3).
-2. Create an API key (Settings → My API Keys) and copy it into `AZURACAST_API_KEY`.
+2. Public reading/listening does not require an API key. Only create one if a future private server-side operation needs it; store it as a runtime secret, never in source or client configuration.
 3. For live DJs: create a streamer/DJ account in AzuraCast — DJs connect with
    their stream key via BUTT/Mixxx/OBS. The app detects `is_live` automatically.
 
 ## Notes
 
 - The service worker never caches the audio stream or the real-time API routes
-  (`/api/stream`, `/api/now-playing`, `/api/schedule` are `NetworkOnly`).
+  (`/api/stream`, `/api/now-playing`, `/api/schedule` are `NetworkOnly`). PWA
+  installability/offline support is not claimed as part of the hosting work.
 - Full e2e and the "no API key in bundle" CI grep are set up to run against a
   real or mocked AzuraCast; see `e2e/`.
