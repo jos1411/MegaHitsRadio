@@ -23,13 +23,26 @@ export async function GET(request: Request): Promise<Response> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), UPSTREAM_SETUP_TIMEOUT_MS);
-    const upstream = await fetch(target.toString(), {
+    const options: RequestInit = {
       headers: { Accept: "image/jpeg,image/png,image/webp,image/gif" },
       cache: "no-store", redirect: "manual", signal: controller.signal,
-    });
-    clearTimeout(timeout);
+    };
+    let upstream: Response;
+    try {
+      upstream = await fetch(target.toString(), options);
+      if (upstream.status >= 300 && upstream.status < 400) {
+        const location = upstream.headers.get("location");
+        await upstream.body?.cancel();
+        const next = location ? trustedTarget(new URL(location, target).toString(), "art") : null;
+        if (!next) return new Response("Artwork unavailable", { status: 502 });
+        upstream = await fetch(next.toString(), options);
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!upstream.ok || !upstream.body) {
+      await upstream.body?.cancel();
       return new Response("Artwork unavailable", { status: 502 });
     }
 

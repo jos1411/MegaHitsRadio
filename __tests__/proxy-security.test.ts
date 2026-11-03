@@ -74,6 +74,32 @@ describe("public proxy security", () => {
     expect(canceled).toBe(true);
   });
 
+  it("allows one same-origin AzuraCast generic artwork redirect", async () => {
+    const url = "https://radio.example.com/api/station/lment_radio/art/ea079c61ade598334aa3d8b4";
+    const fallback = "/static/vite_dist/assets/generic_song-7JSFKOXX.jpg";
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: fallback } }))
+      .mockResolvedValueOnce(new Response("fallback", { headers: { "content-type": "image/jpeg" } }));
+    vi.stubGlobal("fetch", fetcher);
+    const response = await art(artRequest(url));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(await response.text()).toBe("fallback");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenLastCalledWith(`https://radio.example.com${fallback}`, expect.objectContaining({ redirect: "manual" }));
+  });
+
+  it("stops after one validated artwork redirect", async () => {
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/static/vite_dist/assets/generic_song-7JSFKOXX.jpg" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "https://evil.example/x" } }));
+    vi.stubGlobal("fetch", fetcher);
+    const response = await art(artRequest("https://radio.example.com/api/station/lment_radio/art/ea079c61ade598334aa3d8b4"));
+    expect(response.status).toBe(502);
+    expect(await response.text()).toBe("Artwork unavailable");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
   it("accepts the station artwork route returned by AzuraCast", async () => {
     const url = "https://radio.example.com/api/station/lment_radio/art/ea079c61ade598334aa3d8b4";
     const fetcher = vi.fn().mockResolvedValue(new Response("cover", { headers: { "content-type": "image/jpeg" } }));
