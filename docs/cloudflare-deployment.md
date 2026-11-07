@@ -16,9 +16,11 @@ listening. If owner-specific private API operations are added later, keep
 client code, build arguments, or browser-visible configuration. Do not create
 or distribute a secret-filled example file.
 
-The checked-in `wrangler.jsonc` contains a non-secret placeholder for the
-origin. Replace it with the owner's verified HTTPS origin before preview or
-deployment. Worker bindings are provided by the Workers runtime and surfaced to
+The checked-in `wrangler.jsonc` selects the confirmed AzuraCast HTTPS origin
+`https://radio.megahitsdiscomovil.com` (station `1`). This is the radio origin,
+not the web domain; the future apex web domain is not deployed. No API key is
+required for public listening. Confirm origin reachability and TLS separately
+before deployment. Worker bindings are provided by the Workers runtime and surfaced to
 server-side `process.env`; `wrangler.jsonc` enables Cloudflare's
 `nodejs_compat_populate_process_env` flag for that mapping. The local preview
 check should verify the actual binding before relying on it. Do not expose

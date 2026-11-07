@@ -10,7 +10,7 @@ import { GET as art } from "@/app/api/art/route";
 
 const data = (url: string) => ({ station: { listen_url: url } });
 const artRequest = (url: string) => new Request(`https://site.example/api/art?url=${encodeURIComponent(url)}`);
-afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); mocks.getBaseUrl.mockReturnValue("https://radio.example.com"); });
 
 describe("public proxy security", () => {
   it.each([
@@ -98,6 +98,27 @@ describe("public proxy security", () => {
     expect(response.status).toBe(502);
     expect(await response.text()).toBe("Artwork unavailable");
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([21, 23, 65])("rejects unsupported %i-hex artwork hashes", async (length) => {
+    const url = `https://radio.example.com/api/station/lment_radio/art/${"a".repeat(length)}`;
+    const fetcher = vi.fn(); vi.stubGlobal("fetch", fetcher);
+    const response = await art(artRequest(url));
+    expect(response.status).toBe(403);
+    expect(await response.text()).toBe("Forbidden");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("accepts the 22-hex artwork hash returned by the live AzuraCast origin", async () => {
+    mocks.getBaseUrl.mockReturnValue("https://radio.megahitsdiscomovil.com");
+    const url = "https://radio.megahitsdiscomovil.com/api/station/megahitsradio/art/ec6ae2c3cac707004bcaef69";
+    const fetcher = vi.fn().mockResolvedValue(new Response("cover", { headers: { "content-type": "image/jpeg" } }));
+    vi.stubGlobal("fetch", fetcher);
+    const response = await art(artRequest(url));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(await response.text()).toBe("cover");
+    expect(fetcher).toHaveBeenCalledWith(url, expect.objectContaining({ redirect: "manual" }));
   });
 
   it("accepts the station artwork route returned by AzuraCast", async () => {

@@ -9,7 +9,7 @@
     "binding": "ASSETS"
   },
   "vars": {
-    "AZURACAST_BASE_URL": "https://your-azuracast-origin.example",
+    "AZURACAST_BASE_URL": "https://radio.megahitsdiscomovil.com",
     "AZURACAST_STATION_ID": "1"
   }
 }

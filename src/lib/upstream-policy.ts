@@ -9,7 +9,7 @@ export function trustedTarget(raw: string, kind: "stream" | "art"): URL | null {
     const valid = kind === "stream"
       ? /^\/(?:listen\/[^/]+\/[^/]+|radio\/[^/]+|stream\/[^/]+)\/?$/i.test(path)
       : /^\/(?:media|uploads|art)\/(?:[a-z0-9._~-]+\/)*[a-z0-9._~-]+\.(?:jpe?g|png|webp|gif)$/i.test(path)
-        || /^\/api\/station\/[a-z0-9_-]+\/art\/[a-f0-9]{24,64}$/i.test(path)
+        || /^\/api\/station\/[a-z0-9_-]+\/art\/(?:[a-f0-9]{22}|[a-f0-9]{24,64})$/i.test(path)
         || /^\/static\/vite_dist\/assets\/generic_song-[a-z0-9_-]+\.(?:jpe?g|png|webp|gif)$/i.test(path)
         || /^\/art\.[a-z0-9]+$/i.test(path);
     return valid ? target : null;
