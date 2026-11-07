@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "lment-radio",
+  "name": "megahitsradio",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-11-02",
   "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
